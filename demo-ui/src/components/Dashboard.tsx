@@ -1,25 +1,25 @@
 import { useState, useEffect } from 'react'
-import { AuthState } from '../App'
+import type { AuthState } from '../types'
 import {
   authenticatedRequest,
   getPashuGPTFarmerByMobile,
   getPashuGPTAnimalByTag,
-  generateDeviceId,
 } from '../api'
+import Documentation from './Documentation'
 
 interface Props {
   auth: AuthState
   onLogout: () => void
+  onLoginClick?: () => void
 }
 
 interface ApiData {
   [key: string]: any
 }
 
-export default function Dashboard({ auth, onLogout }: Props) {
+export default function Dashboard({ auth, onLogout, onLoginClick }: Props) {
   const [loading, setLoading] = useState(false)
-  const [deviceId] = useState(generateDeviceId())
-  const [activeTab, setActiveTab] = useState<'amul' | 'pashugpt'>('amul')
+  const [activeTab, setActiveTab] = useState<'amul' | 'pashugpt' | 'docs'>('docs')
 
   // Amul API Data
   const [amulData, setAmulData] = useState<ApiData>({})
@@ -47,7 +47,7 @@ export default function Dashboard({ auth, onLogout }: Props) {
           auth.baseUrl,
           endpoint,
           auth.bearerToken,
-          deviceId
+          auth.deviceId
         )
         data[name] = response
       } catch (err) {
@@ -87,73 +87,88 @@ export default function Dashboard({ auth, onLogout }: Props) {
     fetchPashuGptData()
   }, [])
 
-  const JsonCard = ({ title, data }: { title: string; data: any }) => (
-    <div className="bg-white rounded-lg shadow mb-4 overflow-hidden">
-      <div className="bg-gray-100 px-4 py-2 border-b">
-        <h3 className="font-semibold text-gray-700">{title}</h3>
-      </div>
-      <pre className="p-4 text-sm overflow-auto max-h-64 bg-gray-50 text-gray-800">
-        {JSON.stringify(data, null, 2)}
-      </pre>
-    </div>
-  )
-
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-blue-600 text-white px-6 py-4 shadow-lg">
+      <header className="bg-black text-white px-6 py-4">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">Amul API Dashboard</h1>
-            <p className="text-blue-200 text-sm">Logged in as: {auth.mobileNumber}</p>
+            <p className="text-neutral-400 text-sm">
+              {auth.isAuthenticated ? `Logged in as: ${auth.mobileNumber}` : 'Public Access - PashuGPT & Docs available'}
+            </p>
           </div>
-          <button
-            onClick={onLogout}
-            className="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg"
-          >
-            Logout
-          </button>
+          {auth.isAuthenticated ? (
+            <button
+              onClick={onLogout}
+              className="border border-white hover:bg-white hover:text-black px-4 py-2 rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          ) : (
+            <button
+              onClick={onLoginClick}
+              className="border border-white hover:bg-white hover:text-black px-4 py-2 rounded-lg transition-colors"
+            >
+              Login with OTP
+            </button>
+          )}
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b border-neutral-200">
         <div className="flex">
           <button
-            onClick={() => setActiveTab('amul')}
-            className={`px-6 py-3 font-medium ${
-              activeTab === 'amul'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+            onClick={() => setActiveTab('docs')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'docs'
+                ? 'text-black border-b-2 border-black'
+                : 'text-neutral-500 hover:text-black'
             }`}
           >
-            Amul APIs (OTP Auth)
+            API Coverage
           </button>
           <button
             onClick={() => setActiveTab('pashugpt')}
-            className={`px-6 py-3 font-medium ${
+            className={`px-6 py-3 font-medium transition-colors ${
               activeTab === 'pashugpt'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-black border-b-2 border-black'
+                : 'text-neutral-500 hover:text-black'
             }`}
           >
-            PashuGPT APIs (No Auth)
+            PashuGPT APIs
+          </button>
+          <button
+            onClick={() => setActiveTab('amul')}
+            className={`px-6 py-3 font-medium transition-colors ${
+              activeTab === 'amul'
+                ? 'text-black border-b-2 border-black'
+                : 'text-neutral-500 hover:text-black'
+            }`}
+          >
+            Amul APIs (Auth)
           </button>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Documentation Tab - Full Width */}
+      {activeTab === 'docs' && <Documentation />}
+
+      {/* Content - Only for amul and pashugpt tabs */}
+      {activeTab !== 'docs' && (
       <div className="flex min-h-[calc(100vh-140px)]">
         {/* Left Panel - UI Cards */}
         <div className="w-1/2 p-6 overflow-auto border-r">
           {activeTab === 'amul' ? (
+            auth.isAuthenticated ? (
             <>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Amul Data (Authenticated)</h2>
                 <button
                   onClick={fetchAmulData}
                   disabled={loading}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                  className="border border-black text-black px-4 py-2 rounded hover:bg-black hover:text-white disabled:opacity-50 transition-colors"
                 >
                   {loading ? 'Loading...' : 'Refresh'}
                 </button>
@@ -161,15 +176,16 @@ export default function Dashboard({ auth, onLogout }: Props) {
 
               {/* Farmer Card */}
               {amulData.GetFarmerDetail?.Data && (
-                <div className="bg-white rounded-lg shadow p-4 mb-4">
+                <div className="border border-neutral-200 rounded-lg p-4 mb-4">
                   <h3 className="font-semibold text-lg mb-2">Farmer Profile</h3>
                   {Array.isArray(amulData.GetFarmerDetail.Data) ? (
                     amulData.GetFarmerDetail.Data.map((farmer: any, idx: number) => (
-                      <div key={idx} className="border-b pb-2 mb-2 last:border-0">
+                      <div key={idx} className="border-b border-neutral-100 pb-2 mb-2 last:border-0">
                         <p className="font-medium">{farmer.FarmerName}</p>
-                        <p className="text-sm text-gray-600">Code: {farmer.FarmerCode}</p>
-                        <p className="text-sm text-gray-600">Society: {farmer.SocietyName}</p>
-                        <p className="text-sm text-gray-600">Mobile: {farmer.MobileNo}</p>
+                        <p className="text-sm text-neutral-600">Farmer ID: {farmer.FarmerId}</p>
+                        <p className="text-sm text-neutral-600">Code: {farmer.FarmerCode}</p>
+                        {farmer.BankName && <p className="text-sm text-neutral-600">Bank: {farmer.BankName}</p>}
+                        {farmer.BankAccountNo && <p className="text-sm text-neutral-600">Account: {farmer.BankAccountNo}</p>}
                       </div>
                     ))
                   ) : (
@@ -180,27 +196,25 @@ export default function Dashboard({ auth, onLogout }: Props) {
 
               {/* Society Card */}
               {amulData.GetSocietyData?.Data && (
-                <div className="bg-white rounded-lg shadow p-4 mb-4">
+                <div className="border border-neutral-200 rounded-lg p-4 mb-4">
                   <h3 className="font-semibold text-lg mb-2">Society Info</h3>
                   <p className="font-medium">{amulData.GetSocietyData.Data.SocietyName}</p>
-                  <p className="text-sm text-gray-600">Code: {amulData.GetSocietyData.Data.SocietyCode}</p>
-                  <p className="text-sm text-gray-600">Union: {amulData.GetSocietyData.Data.UnionName}</p>
-                  <p className="text-sm text-gray-600">
-                    Address: {amulData.GetSocietyData.Data.VillageName}, {amulData.GetSocietyData.Data.TalukaName}, {amulData.GetSocietyData.Data.DistrictName}
-                  </p>
+                  <p className="text-sm text-neutral-600">Society Code: {amulData.GetSocietyData.Data.SocietyCode}</p>
+                  <p className="text-sm text-neutral-600">Society ID: {amulData.GetSocietyData.Data.SocietyId}</p>
+                  <p className="text-sm text-neutral-600">Union: {amulData.GetSocietyData.Data.UnionName} ({amulData.GetSocietyData.Data.UnionCode})</p>
                 </div>
               )}
 
               {/* Settings Card */}
               {amulData.GetFarmerSetting?.Data && (
-                <div className="bg-white rounded-lg shadow p-4 mb-4">
+                <div className="border border-neutral-200 rounded-lg p-4 mb-4">
                   <h3 className="font-semibold text-lg mb-2">Settings</h3>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     {Array.isArray(amulData.GetFarmerSetting.Data) &&
                       amulData.GetFarmerSetting.Data.map((setting: any, idx: number) => (
-                        <div key={idx} className="flex justify-between bg-gray-50 p-2 rounded">
-                          <span>{setting.SettingName}</span>
-                          <span className={setting.SettingValue === 'true' ? 'text-green-600' : 'text-gray-500'}>
+                        <div key={idx} className="flex justify-between border border-neutral-100 p-2 rounded">
+                          <span className="text-neutral-600">{setting.SettingKey}</span>
+                          <span className={setting.SettingValue === 'true' ? 'text-black font-medium' : 'text-neutral-400'}>
                             {setting.SettingValue}
                           </span>
                         </div>
@@ -209,14 +223,27 @@ export default function Dashboard({ auth, onLogout }: Props) {
                 </div>
               )}
             </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64">
+                <h2 className="text-xl font-semibold mb-4">Login Required</h2>
+                <p className="text-neutral-600 mb-4">Amul APIs require OTP authentication</p>
+                <button
+                  onClick={onLoginClick}
+                  className="border border-black px-6 py-3 rounded-lg hover:bg-black hover:text-white transition-colors"
+                >
+                  Login with OTP
+                </button>
+              </div>
+            )
           ) : (
+            auth.isAuthenticated ? (
             <>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">PashuGPT Data</h2>
                 <button
                   onClick={fetchPashuGptData}
                   disabled={loading}
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
+                  className="border border-black text-black px-4 py-2 rounded hover:bg-black hover:text-white disabled:opacity-50 transition-colors"
                 >
                   {loading ? 'Loading...' : 'Refresh'}
                 </button>
@@ -348,11 +375,23 @@ export default function Dashboard({ auth, onLogout }: Props) {
                 </div>
               )}
             </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64">
+                <h2 className="text-xl font-semibold mb-4">Login Required</h2>
+                <p className="text-neutral-600 mb-4">PashuGPT APIs require authentication</p>
+                <button
+                  onClick={onLoginClick}
+                  className="border border-black px-6 py-3 rounded-lg hover:bg-black hover:text-white transition-colors"
+                >
+                  Login with OTP
+                </button>
+              </div>
+            )
           )}
         </div>
 
         {/* Right Panel - Raw JSON */}
-        <div className="w-1/2 p-6 bg-gray-900 overflow-auto">
+        <div className="w-1/2 p-6 bg-black overflow-auto">
           <h2 className="text-lg font-semibold text-white mb-4">Raw JSON Responses</h2>
 
           {activeTab === 'amul' ? (
@@ -376,6 +415,7 @@ export default function Dashboard({ auth, onLogout }: Props) {
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }

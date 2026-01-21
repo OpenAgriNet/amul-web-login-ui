@@ -6,9 +6,7 @@ const APP_VERSION = '3.0.4'
 const APP_TYPE = '3'
 const APP_PLATFORM = '3'
 
-// PashuGPT API Constants
-const PASHUGPT_BASE_URL = 'https://api.amulpashudhan.com/configman/v1/PashuGPT'
-const PASHUGPT_TOKEN = 'REDACTED_PASHUGPT_TOKEN'
+// PashuGPT API - uses serverless functions to protect the token
 
 // Generate random device ID
 export function generateDeviceId(): string {
@@ -22,7 +20,7 @@ export function generateDeviceId(): string {
 // ============== Main Amul APIs (OTP Required) ==============
 
 export async function getApiUrl(mobileNo: string) {
-  const response = await fetch('https://farmer.amulamcs.com/farmer/GetAPIUrl', {
+  const response = await fetch('/api/amul/farmer/GetAPIUrl', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -40,7 +38,7 @@ export async function getApiUrl(mobileNo: string) {
 }
 
 export async function sendOtp(mobileNo: string, deviceId: string) {
-  const response = await fetch('https://farmer.amulamcs.com/ValidateMobileNo', {
+  const response = await fetch('/api/amul/ValidateMobileNo', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -67,7 +65,7 @@ export async function sendOtp(mobileNo: string, deviceId: string) {
 }
 
 export async function verifyOtp(mobileNo: string, otp: string, deviceId: string) {
-  const response = await fetch('https://farmer.amulamcs.com/RegisterMobileNo', {
+  const response = await fetch('/api/amul/RegisterMobileNo', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -103,7 +101,7 @@ function generateSignature(): string {
 }
 
 export async function authenticatedRequest(
-  baseUrl: string,
+  _baseUrl: string,
   endpoint: string,
   bearerToken: string,
   deviceId: string,
@@ -111,7 +109,7 @@ export async function authenticatedRequest(
 ) {
   const encodedToken = btoa(`${bearerToken}:${deviceId}:${generateRequestId()}:${generateSignature()}`)
 
-  const response = await fetch(`${baseUrl}${endpoint}`, {
+  const response = await fetch(`/api/amul/${endpoint}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -123,32 +121,14 @@ export async function authenticatedRequest(
   return response.json()
 }
 
-// ============== PashuGPT APIs (No OTP Required) ==============
+// ============== PashuGPT APIs (via serverless functions - token protected) ==============
 
 export async function getPashuGPTFarmerByMobile(mobileNumber: string) {
-  const response = await fetch(
-    `${PASHUGPT_BASE_URL}/GetFarmerDetailsByMobile?mobileNumber=${mobileNumber}`,
-    {
-      method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'Authorization': `Bearer ${PASHUGPT_TOKEN}`,
-      },
-    }
-  )
+  const response = await fetch(`/api/pashugpt/farmer?mobileNumber=${mobileNumber}`)
   return response.json()
 }
 
 export async function getPashuGPTAnimalByTag(tagNo: string) {
-  const response = await fetch(
-    `${PASHUGPT_BASE_URL}/GetAnimalDetailsByTagNo?tagNo=${tagNo}`,
-    {
-      method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'Authorization': `Bearer ${PASHUGPT_TOKEN}`,
-      },
-    }
-  )
+  const response = await fetch(`/api/pashugpt/animal?tagNo=${tagNo}`)
   return response.json()
 }

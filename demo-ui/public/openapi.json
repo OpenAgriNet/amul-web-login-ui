@@ -1,0 +1,619 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Amul PashuGPT API",
+    "description": "APIs for Amul dairy farming chatbot - includes PashuGPT animal/farmer data and Amul OTP-authenticated endpoints",
+    "version": "1.0.0",
+    "contact": {
+      "name": "OpenAgriNet"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.amulpashudhan.com/configman/v1/PashuGPT",
+      "description": "PashuGPT API Server"
+    },
+    {
+      "url": "https://farmer.amulamcs.com",
+      "description": "Amul Farmer API Server"
+    }
+  ],
+  "paths": {
+    "/GetFarmerDetailsByMobile": {
+      "get": {
+        "summary": "Get farmer details by mobile number",
+        "description": "Returns farmer information including animal counts, location, and society details",
+        "operationId": "getFarmerByMobile",
+        "tags": ["PashuGPT"],
+        "parameters": [
+          {
+            "name": "mobileNumber",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "9601335568"
+            },
+            "description": "10-digit mobile number of the farmer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FarmerDetails"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/GetAnimalDetailsByTagNo": {
+      "get": {
+        "summary": "Get animal details by tag number",
+        "description": "Returns comprehensive animal information including breeding history, lactation, and health data",
+        "operationId": "getAnimalByTag",
+        "tags": ["PashuGPT"],
+        "parameters": [
+          {
+            "name": "tagNo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "106290093933"
+            },
+            "description": "12-digit animal tag number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnimalDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/farmer/GetAPIUrl": {
+      "post": {
+        "summary": "Get API configuration URLs",
+        "description": "Returns API base URLs and configuration for the mobile app",
+        "operationId": "getApiUrl",
+        "tags": ["Amul Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetApiUrlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUrlResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ValidateMobileNo": {
+      "post": {
+        "summary": "Send OTP to mobile number",
+        "description": "Validates mobile number and sends OTP for authentication",
+        "operationId": "sendOtp",
+        "tags": ["Amul Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateMobileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateMobileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/RegisterMobileNo": {
+      "post": {
+        "summary": "Verify OTP and get bearer token",
+        "description": "Verifies OTP and returns bearer token for authenticated requests",
+        "operationId": "verifyOtp",
+        "tags": ["Amul Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterMobileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterMobileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/GetFarmerDetail": {
+      "post": {
+        "summary": "Get farmer profile and milk data",
+        "description": "Returns detailed farmer information including milk collection data",
+        "operationId": "getFarmerDetail",
+        "tags": ["Amul Data"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "CultureId": {
+                    "type": "string",
+                    "example": "1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmulApiResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "amulBearerAuth": []
+          }
+        ]
+      }
+    },
+    "/GetSocietyData": {
+      "post": {
+        "summary": "Get society/cooperative information",
+        "description": "Returns details about the farmer's dairy cooperative society",
+        "operationId": "getSocietyData",
+        "tags": ["Amul Data"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "CultureId": {
+                    "type": "string",
+                    "example": "1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmulApiResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "amulBearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FarmerDetails": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "example": "GUJARAT"
+          },
+          "district": {
+            "type": "string",
+            "example": "BANASKANTHA"
+          },
+          "subDistrict": {
+            "type": "string",
+            "example": "PALANPUR"
+          },
+          "village": {
+            "type": "string",
+            "example": "FATEPUR"
+          },
+          "unionName": {
+            "type": "string",
+            "example": "BANAS"
+          },
+          "societyName": {
+            "type": "string",
+            "example": "FATEPUR (VAD)M.P.C.S.LTD"
+          },
+          "farmerName": {
+            "type": "string",
+            "example": "GEETABEN JASHWANATJI PARMAR"
+          },
+          "mobileNumber": {
+            "type": "string",
+            "example": "9601335568"
+          },
+          "farmerCode": {
+            "type": "string",
+            "example": "1165"
+          },
+          "avgMilkPerDayInLiter": {
+            "type": "number",
+            "example": 0.0
+          },
+          "totalAnimals": {
+            "type": "integer",
+            "example": 0
+          },
+          "cow": {
+            "type": "integer",
+            "example": 0
+          },
+          "buffalo": {
+            "type": "integer",
+            "example": 0
+          },
+          "totalMilkingAnimals": {
+            "type": "integer",
+            "example": 0
+          }
+        }
+      },
+      "AnimalDetails": {
+        "type": "object",
+        "properties": {
+          "tagNumber": {
+            "type": "string",
+            "example": "106290093933"
+          },
+          "animalType": {
+            "type": "string",
+            "enum": ["Cow", "Buffalo"],
+            "example": "Buffalo"
+          },
+          "breed": {
+            "type": "string",
+            "example": "Mehsana"
+          },
+          "milkingStage": {
+            "type": "string",
+            "enum": ["Milking", "Dry"],
+            "example": "Milking"
+          },
+          "pregnancyStage": {
+            "type": "string",
+            "enum": ["Pregnant", "Non Pregnant"],
+            "example": "Non Pregnant"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2019-10-27T00:00:00"
+          },
+          "lactationNo": {
+            "type": "integer",
+            "example": 3
+          },
+          "lastBreedingActivity": {
+            "$ref": "#/components/schemas/BreedingActivity"
+          },
+          "lastHealthActivity": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "BreedingActivity": {
+        "type": "object",
+        "properties": {
+          "lastAI": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last Artificial Insemination date"
+          },
+          "lastPD": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last Pregnancy Detection date"
+          },
+          "lastCalving": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last calving/birth date"
+          },
+          "calfTagNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "calfMale": {
+            "type": "integer",
+            "example": 0
+          },
+          "calfFemale": {
+            "type": "integer",
+            "example": 0
+          }
+        }
+      },
+      "GetApiUrlRequest": {
+        "type": "object",
+        "required": ["MobileNo"],
+        "properties": {
+          "MobileNo": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "ApiVersion": {
+            "type": "string",
+            "example": "1.0.1"
+          },
+          "AppType": {
+            "type": "string",
+            "example": "3"
+          },
+          "APPPlatForm": {
+            "type": "string",
+            "example": "3"
+          },
+          "AppVersion": {
+            "type": "string",
+            "example": "3.0.4"
+          }
+        }
+      },
+      "ApiUrlResponse": {
+        "type": "object",
+        "properties": {
+          "Data": {
+            "type": "object",
+            "properties": {
+              "Url": {
+                "type": "string",
+                "example": "https://farmer.amulamcs.com/"
+              },
+              "UserType": {
+                "type": "integer"
+              }
+            }
+          },
+          "StatusCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "Message": {
+            "type": "string",
+            "example": "OK"
+          }
+        }
+      },
+      "ValidateMobileRequest": {
+        "type": "object",
+        "required": ["MobileNo", "DeviceId", "AppKey"],
+        "properties": {
+          "AppKey": {
+            "type": "string"
+          },
+          "APPVerificationSecret": {
+            "type": "string"
+          },
+          "MobileNo": {
+            "type": "string"
+          },
+          "DeviceId": {
+            "type": "string"
+          },
+          "CultureId": {
+            "type": "string"
+          },
+          "ApiVersion": {
+            "type": "string"
+          },
+          "AppType": {
+            "type": "string"
+          },
+          "APPPlatForm": {
+            "type": "string"
+          },
+          "AppVersion": {
+            "type": "string"
+          }
+        }
+      },
+      "ValidateMobileResponse": {
+        "type": "object",
+        "properties": {
+          "Data": {
+            "type": "object",
+            "properties": {
+              "APIKey": {
+                "type": "string"
+              },
+              "APISecret": {
+                "type": "string"
+              }
+            }
+          },
+          "StatusCode": {
+            "type": "integer"
+          },
+          "Message": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterMobileRequest": {
+        "type": "object",
+        "required": ["MobileNo", "OTP", "DeviceId"],
+        "properties": {
+          "AppKey": {
+            "type": "string"
+          },
+          "APPVerificationSecret": {
+            "type": "string"
+          },
+          "MobileNo": {
+            "type": "string"
+          },
+          "DeviceId": {
+            "type": "string"
+          },
+          "OTP": {
+            "type": "string"
+          },
+          "ApiVersion": {
+            "type": "string"
+          },
+          "AppType": {
+            "type": "string"
+          },
+          "CultureId": {
+            "type": "string"
+          },
+          "APPPlatForm": {
+            "type": "string"
+          },
+          "AppVersion": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterMobileResponse": {
+        "type": "object",
+        "properties": {
+          "Data": {
+            "type": "string",
+            "description": "Bearer token for authenticated requests"
+          },
+          "StatusCode": {
+            "type": "integer"
+          },
+          "Message": {
+            "type": "string"
+          }
+        }
+      },
+      "AmulApiResponse": {
+        "type": "object",
+        "properties": {
+          "Data": {
+            "type": "object"
+          },
+          "Errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "Message": {
+            "type": "string"
+          },
+          "StatusCode": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "PashuGPT API token"
+      },
+      "amulBearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Amul bearer token (obtained from RegisterMobileNo response, encoded with deviceId and signature)"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "PashuGPT",
+      "description": "Animal and farmer data APIs (Bearer token auth)"
+    },
+    {
+      "name": "Amul Auth",
+      "description": "OTP-based authentication flow"
+    },
+    {
+      "name": "Amul Data",
+      "description": "Authenticated data endpoints"
+    }
+  ]
+}
