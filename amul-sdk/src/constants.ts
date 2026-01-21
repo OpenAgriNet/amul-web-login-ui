@@ -104,6 +104,24 @@ export const PASHUDHAN_ENDPOINTS = {
   SET_READ_NOTIFICATION: 'Notification/SetReadNotification',
 } as const;
 
+// ============== PashuGPT API (NEW - for Chatbot) ==============
+
+export const PASHUGPT_CONFIG = {
+  /** PashuGPT API Base URL */
+  BASE_URL: 'https://api.amulpashudhan.com/configman/v1/PashuGPT',
+
+  /** PashuGPT Bearer Token */
+  TOKEN: 'REDACTED_PASHUGPT_TOKEN',
+} as const;
+
+export const PASHUGPT_ENDPOINTS = {
+  /** Get farmer details by mobile number */
+  GET_FARMER_BY_MOBILE: 'GetFarmerDetailsByMobile',
+
+  /** Get animal details by tag number */
+  GET_ANIMAL_BY_TAG: 'GetAnimalDetailsByTagNo',
+} as const;
+
 // ============== Item Order Endpoints ==============
 
 export const ITEM_ORDER_ENDPOINTS = {

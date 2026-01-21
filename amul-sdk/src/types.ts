@@ -257,3 +257,54 @@ export interface AuthState {
   pashudhanToken: string | null;
   isAuthenticated: boolean;
 }
+
+// ============== PashuGPT API Types (NEW - for Chatbot) ==============
+
+/**
+ * Farmer details from PashuGPT API
+ * Endpoint: GetFarmerDetailsByMobile
+ */
+export interface PashuGPTFarmerDetails {
+  state: string;
+  district: string;
+  subDistrict: string;
+  village: string;
+  unionName: string;
+  societyName: string;
+  farmerName: string;
+  mobileNumber: string;
+  farmerCode: string;
+  avgMilkPerDayInLiter: number;
+  totalAnimals: number;
+  cow: number;
+  buffalo: number;
+  totalMilkingAnimals: number;
+}
+
+/**
+ * Breeding activity details
+ */
+export interface BreedingActivity {
+  lastAI: string | null;
+  lastPD: string | null;
+  lastCalving: string | null;
+  calfTagNo: string | null;
+  calfMale: number;
+  calfFemale: number;
+}
+
+/**
+ * Animal details from PashuGPT API
+ * Endpoint: GetAnimalDetailsByTagNo
+ */
+export interface PashuGPTAnimalDetails {
+  tagNumber: string;
+  animalType: string;  // "Buffalo" | "Cow"
+  breed: string;       // "Mehsana" | "Gir" | "HF Cross" etc.
+  milkingStage: string;  // "Milking" | "Dry"
+  pregnancyStage: string;  // "Non Pregnant" | "Pregnant"
+  dateOfBirth: string;
+  lactationNo: number;
+  lastBreedingActivity: BreedingActivity;
+  lastHealthActivity: unknown | null;
+}

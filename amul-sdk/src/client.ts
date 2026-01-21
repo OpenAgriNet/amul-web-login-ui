@@ -22,6 +22,8 @@ import {
   PashudhanAuthRequest,
   PashudhanAuthResponse,
   PashudhanApiResponse,
+  PashuGPTFarmerDetails,
+  PashuGPTAnimalDetails,
 } from './types';
 
 import {
@@ -29,6 +31,8 @@ import {
   APP_CONSTANTS,
   ENDPOINTS,
   PASHUDHAN_ENDPOINTS,
+  PASHUGPT_CONFIG,
+  PASHUGPT_ENDPOINTS,
 } from './constants';
 
 export class AmulApiClient {
@@ -486,6 +490,93 @@ export class AmulApiClient {
 
   setDeviceId(deviceId: string): void {
     this.config.deviceId = deviceId;
+  }
+
+  // ============== PashuGPT API Methods (NEW - for Chatbot) ==============
+
+  /**
+   * Get farmer details by mobile number from PashuGPT API
+   * NO OTP required - uses Bearer token authentication
+   *
+   * @param mobileNumber - Farmer's mobile number
+   * @returns Array of farmer details (farmer may have multiple registrations)
+   */
+  async getPashuGPTFarmerByMobile(mobileNumber: string): Promise<PashuGPTFarmerDetails[]> {
+    const url = `${PASHUGPT_CONFIG.BASE_URL}/${PASHUGPT_ENDPOINTS.GET_FARMER_BY_MOBILE}?mobileNumber=${mobileNumber}`;
+
+    this.log(`GET ${url}`);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${PASHUGPT_CONFIG.TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    this.log(`PashuGPT Farmer Response`, data);
+
+    return data as PashuGPTFarmerDetails[];
+  }
+
+  /**
+   * Get animal details by tag number from PashuGPT API
+   * Returns comprehensive animal data including breeding, pregnancy, and lactation info
+   * NO OTP required - uses Bearer token authentication
+   *
+   * @param tagNo - Animal's tag number
+   * @returns Animal details with breeding activity
+   */
+  async getPashuGPTAnimalByTag(tagNo: string): Promise<PashuGPTAnimalDetails> {
+    const url = `${PASHUGPT_CONFIG.BASE_URL}/${PASHUGPT_ENDPOINTS.GET_ANIMAL_BY_TAG}?tagNo=${tagNo}`;
+
+    this.log(`GET ${url}`);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'Authorization': `Bearer ${PASHUGPT_CONFIG.TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    this.log(`PashuGPT Animal Response`, data);
+
+    return data as PashuGPTAnimalDetails;
+  }
+
+  /**
+   * Helper: Calculate days since a date
+   */
+  static daysSince(dateString: string | null): number | null {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    const today = new Date();
+    const diffTime = today.getTime() - date.getTime();
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  /**
+   * Helper: Check if animal might be in heat based on days since last AI
+   * Heat cycle is typically 18-24 days
+   */
+  static isLikelyInHeat(animal: PashuGPTAnimalDetails): boolean {
+    const daysSinceAI = AmulApiClient.daysSince(animal.lastBreedingActivity.lastAI);
+    if (daysSinceAI === null) return false;
+    return daysSinceAI >= 18 && daysSinceAI <= 24;
+  }
+
+  /**
+   * Helper: Check if pregnancy detection should be recommended
+   * PD can be done 25 days to 3 months after AI
+   */
+  static shouldRecommendPD(animal: PashuGPTAnimalDetails): boolean {
+    if (animal.pregnancyStage === 'Pregnant') return false;
+    const daysSinceAI = AmulApiClient.daysSince(animal.lastBreedingActivity.lastAI);
+    if (daysSinceAI === null) return false;
+    return daysSinceAI >= 25 && daysSinceAI <= 90;
   }
 }
 
