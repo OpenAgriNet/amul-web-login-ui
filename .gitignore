@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Captured traffic (contains sensitive data)
+*.flow
+captured-data/
+
+# Test files with hardcoded data
+test-*.js
+verify-*.js
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Decompiled APK (large)
+decompiled/
+
+# APK files
+*.apk

@@ -1,0 +1,43 @@
+{
+  "name": "amul-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for Amul Milk Producer App APIs",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.esm.json",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "amul",
+    "dairy",
+    "milk",
+    "farmer",
+    "api",
+    "sdk",
+    "typescript"
+  ],
+  "author": "OpenAgriNet",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
