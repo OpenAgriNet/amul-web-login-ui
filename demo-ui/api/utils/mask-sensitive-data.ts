@@ -19,7 +19,7 @@
  */
 function maskString(value: string | null | undefined, minLength: number = 4): string | null {
   if (!value || typeof value !== 'string') {
-    return value;
+    return value ?? null;
   }
 
   if (value.length < minLength) {

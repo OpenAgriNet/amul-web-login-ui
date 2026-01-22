@@ -20,8 +20,8 @@ export default function Dashboard({ auth, onLogout }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   // API Response Data
-  const [farmerByMobile, setFarmerByMobile] = useState<any>(null)
-  const [animalByTag, setAnimalByTag] = useState<any>(null)
+  const [_farmerByMobile, setFarmerByMobile] = useState<any>(null)
+  const [_animalByTag, setAnimalByTag] = useState<any>(null)
   const [amulFarmerDetail, setAmulFarmerDetail] = useState<any>(null)
   const [amulSocietyData, setAmulSocietyData] = useState<any>(null)
 

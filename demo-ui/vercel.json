@@ -1,5 +1,11 @@
 {
   "public": true,
+  "regions": ["bom1"],
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api/amul/:path*",
