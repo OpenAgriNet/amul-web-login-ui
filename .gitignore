@@ -25,3 +25,7 @@ decompiled/
 
 # APK files
 *.apk
+
+# keys
+*.pem
+*.env

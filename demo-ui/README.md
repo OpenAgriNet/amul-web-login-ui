@@ -1,73 +1,105 @@
-# React + TypeScript + Vite
+# Amul API Demo UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript demo application for testing and demonstrating Amul API integrations for a dairy farming chatbot.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19.2.0 + TypeScript
+- Vite (build tool)
+- Tailwind CSS
+- Vercel (deployment with serverless functions)
 
-## React Compiler
+## Development Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Option 1: Using Vercel Dev (Recommended - Matches Production)
 
-## Expanding the ESLint configuration
+This runs the actual Vercel serverless functions locally, matching production exactly:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev:vercel
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**Pros:**
+- ✅ Exact match with production environment
+- ✅ Serverless functions run locally
+- ✅ No code duplication between dev/prod
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**Cons:**
+- ⚠️ Requires Vercel CLI installed
+- ⚠️ Slightly slower startup
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Option 2: Using Vite Dev (Quick Frontend Development)
+
+For quick frontend-only development without serverless functions:
+
+```bash
+npm install
+npm run dev
 ```
+
+**Pros:**
+- ✅ Fast HMR (Hot Module Replacement)
+- ✅ Quick startup
+- ✅ Good for UI-only changes
+
+**Cons:**
+- ⚠️ Uses Vite plugin to mock `/api/generate-token` (dev != production)
+- ⚠️ Serverless functions not actually running
+
+## Environment Variables
+
+Create a `.env` file in the `demo-ui` directory:
+
+```env
+JWT_PRIVATE_KEY=your-private-key-in-pkcs8-format
+VITE_CHAT_BASE_URL=https://dev-amulmitra.amul.com
+```
+
+**Note:** `JWT_PRIVATE_KEY` should be in PKCS#8 format (starts with `-----BEGIN PRIVATE KEY-----`). If stored as an env var, ensure newlines are preserved (use `\n` or actual newlines).
+
+## API Endpoints
+
+### Serverless Functions (Vercel)
+
+- `/api/generate-token` - Generates JWT token with farmer/animal data
+- `/api/pashugpt/farmer` - Proxy to PashuGPT farmer API
+- `/api/pashugpt/animal` - Proxy to PashuGPT animal API
+
+### Proxied APIs (Vite Dev)
+
+- `/api/amul/*` - Proxied to `https://farmer.amulamcs.com`
+
+## Build & Deploy
+
+```bash
+npm run build
+```
+
+The built files will be in the `dist` directory, ready for deployment to Vercel.
+
+## Project Structure
+
+```
+demo-ui/
+├── api/                    # Vercel serverless functions
+│   ├── generate-token.ts   # JWT token generation
+│   └── pashugpt/           # PashuGPT API proxies
+├── src/
+│   ├── components/         # React components
+│   ├── api.ts              # API client functions
+│   └── types.ts            # TypeScript types
+├── vite.config.ts          # Vite configuration
+├── vite-plugin-generate-token.ts  # Vite plugin for local dev
+└── vercel.json             # Vercel configuration
+```
+
+## Why Two Dev Modes?
+
+**The Problem:** Vite doesn't understand Vercel serverless functions. The `/api` directory files are only executed by Vercel.
+
+**The Solution:** 
+- **Production/Vercel Dev**: Vercel automatically runs files in `/api` as serverless functions
+- **Vite Dev**: We use a plugin to mock the `/api/generate-token` endpoint locally
+
+**Recommendation:** Use `vercel dev` for full-stack testing, and `vite dev` for quick frontend iterations.

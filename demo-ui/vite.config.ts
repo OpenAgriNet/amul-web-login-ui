@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { generateTokenPlugin } from './vite-plugin-generate-token'
 
 // PashuGPT token for local dev only - in production this is in env vars
 const PASHUGPT_TOKEN = 'REDACTED_PASHUGPT_TOKEN'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), generateTokenPlugin()],
   server: {
     proxy: {
       '/api/amul': {

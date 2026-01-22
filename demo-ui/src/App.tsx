@@ -11,25 +11,13 @@ function App() {
     baseUrl: 'https://farmer.amulamcs.com/',
     deviceId: '',
   })
-  const [showLogin, setShowLogin] = useState(false)
 
   const handleLogin = (newAuth: AuthState) => {
     setAuth(newAuth)
-    setShowLogin(false)
   }
 
-  if (showLogin && !auth.isAuthenticated) {
-    return (
-      <div>
-        <button
-          onClick={() => setShowLogin(false)}
-          className="absolute top-4 right-4 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
-        >
-          Back to Dashboard
-        </button>
-        <LoginForm onLogin={handleLogin} />
-      </div>
-    )
+  if (!auth.isAuthenticated) {
+    return <LoginForm onLogin={handleLogin} />
   }
 
   return <Dashboard
@@ -41,7 +29,6 @@ function App() {
       baseUrl: 'https://farmer.amulamcs.com/',
       deviceId: '',
     })}
-    onLoginClick={() => setShowLogin(true)}
   />
 }
 
