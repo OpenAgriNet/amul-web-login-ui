@@ -23,6 +23,7 @@ const amulSocietyData = JSON.parse(
 // Structure the payload according to our JWT format
 // Note: farmerByMobile is an array - one mobile number can have multiple farmer registrations
 // We collate all data (PashuGPT, Amul, Society, Animal) per farmer by matching farmerCode
+// IMPORTANT: We include ALL fields from API responses to avoid data loss
 const farmers = Array.isArray(farmerByMobile) ? farmerByMobile : (farmerByMobile ? [farmerByMobile] : []);
 const amulFarmers = Array.isArray(amulFarmerDetail.Data) ? amulFarmerDetail.Data : (amulFarmerDetail.Data ? [amulFarmerDetail.Data] : []);
 const societyData = amulSocietyData.Data || null;
@@ -33,62 +34,19 @@ const collatedFarmers = farmers.map((pashuFarmer) => {
   const amulFarmer = amulFarmers.find((af) => af.FarmerCode === pashuFarmer.farmerCode);
   
   return {
-    // PashuGPT data
-    farmerCode: pashuFarmer.farmerCode,
-    farmerName: pashuFarmer.farmerName,
-    mobileNumber: pashuFarmer.mobileNumber,
-    village: pashuFarmer.village,
-    district: pashuFarmer.district,
-    subDistrict: pashuFarmer.subDistrict,
-    state: pashuFarmer.state,
-    animalCount: {
-      cow: pashuFarmer.cow || 0,
-      buffalo: pashuFarmer.buffalo || 0,
-      totalAnimals: pashuFarmer.totalAnimals || 0,
-      totalMilkingAnimals: pashuFarmer.totalMilkingAnimals || 0,
-    },
-    avgMilkPerDayInLiter: pashuFarmer.avgMilkPerDayInLiter,
-    // Amul farmer data (matched by farmerCode)
-    amulData: amulFarmer ? {
-      farmerId: amulFarmer.FarmerId,
-      bankName: amulFarmer.BankName,
-      bankAccountNo: amulFarmer.BankAccountNo,
-      ifscCode: amulFarmer.IFSCCode,
-      bankBranchCode: amulFarmer.BankBranchCode,
-      isMember: amulFarmer.IsMember,
-      address: amulFarmer.Address,
-      email: amulFarmer.Email,
-      whatsAppNo: amulFarmer.WhatsAppNo,
-      cattleBuySellGuid: amulFarmer.CattleBuySellGuid,
-      latitude: amulFarmer.Latitude,
-      longitude: amulFarmer.Longitude,
-    } : null,
-    // Society data (shared, but included per farmer for convenience)
-    society: societyData ? {
-      societyId: societyData.SocietyId,
-      societyName: societyData.SocietyName,
-      societyCode: societyData.SocietyCode,
-      unionName: societyData.UnionName,
-      unionCode: societyData.UnionCode,
-      unionId: societyData.UnionId,
-    } : null,
-    // Animal details (single animal by tag - included in all farmers since it's tag-based query)
-    animalDetails: animalByTag ? {
-      tagNumber: animalByTag.tagNumber,
-      animalType: animalByTag.animalType,
-      breed: animalByTag.breed,
-      lactationNo: animalByTag.lactationNo,
-      milkingStage: animalByTag.milkingStage,
-      pregnancyStage: animalByTag.pregnancyStage,
-      dateOfBirth: animalByTag.dateOfBirth,
-      lastBreedingActivity: animalByTag.lastBreedingActivity,
-      lastHealthActivity: animalByTag.lastHealthActivity,
-    } : null,
+    // PashuGPT data - include ALL fields from the response
+    pashuGPTData: pashuFarmer,
+    // Amul farmer data (matched by farmerCode) - include ALL fields from the response
+    amulData: amulFarmer || null,
+    // Society data (shared, but included per farmer for convenience) - include ALL fields
+    society: societyData || null,
+    // Animal details (single animal by tag - included in all farmers since it's tag-based query) - include ALL fields
+    animalDetails: animalByTag || null,
   };
 });
 
 const payload = {
-  sub: collatedFarmers[0]?.farmerCode || 'unknown',
+  sub: collatedFarmers[0]?.pashuGPTData?.farmerCode || 'unknown',
   data: {
     farmers: collatedFarmers,
   },
