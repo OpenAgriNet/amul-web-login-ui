@@ -2,6 +2,7 @@ import * as jose from 'jose';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { maskSensitiveFinancialData } from './api/utils/mask-sensitive-data.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,11 +34,16 @@ const collatedFarmers = farmers.map((pashuFarmer) => {
   // Find matching Amul farmer data by farmerCode
   const amulFarmer = amulFarmers.find((af) => af.FarmerCode === pashuFarmer.farmerCode);
   
+  // Mask sensitive financial information before including in JWT
+  // Based on OpenAPI spec: BankAccountNo, IFSCCode, BankBranchCode are sensitive
+  // BankName is kept unmasked as it's not sensitive
+  const maskedAmulFarmer = amulFarmer ? maskSensitiveFinancialData(amulFarmer) : null;
+  
   return {
     // PashuGPT data - include ALL fields from the response
     pashuGPTData: pashuFarmer,
-    // Amul farmer data (matched by farmerCode) - include ALL fields from the response
-    amulData: amulFarmer || null,
+    // Amul farmer data (matched by farmerCode) - sensitive financial fields are masked
+    amulData: maskedAmulFarmer,
     // Society data (shared, but included per farmer for convenience) - include ALL fields
     society: societyData || null,
     // Animal details (single animal by tag - included in all farmers since it's tag-based query) - include ALL fields

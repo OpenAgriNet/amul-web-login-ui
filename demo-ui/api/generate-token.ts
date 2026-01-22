@@ -1,4 +1,12 @@
 import * as jose from 'jose';
+import { maskSensitiveFinancialData } from './utils/mask-sensitive-data';
+
+// Type declaration for Edge Runtime environment
+declare const process: {
+  env: {
+    [key: string]: string | undefined;
+  };
+};
 
 export const config = {
   runtime: 'edge',
@@ -17,6 +25,7 @@ export default async function handler(request: Request) {
     const { farmerData, animalData, amulFarmerDetail, amulSocietyData } = data;
 
     // Get JWT private key from environment variable
+    // @ts-ignore - process.env is available in Vercel Edge Runtime
     const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY;
     
     if (!JWT_PRIVATE_KEY) {
@@ -40,11 +49,16 @@ export default async function handler(request: Request) {
       // Find matching Amul farmer data by farmerCode
       const amulFarmer = amulFarmers.find((af: any) => af.FarmerCode === pashuFarmer.farmerCode);
       
+      // Mask sensitive financial information before including in JWT
+      // Based on OpenAPI spec: BankAccountNo, IFSCCode, BankBranchCode are sensitive
+      // BankName is kept unmasked as it's not sensitive
+      const maskedAmulFarmer = amulFarmer ? maskSensitiveFinancialData(amulFarmer) : null;
+      
       return {
         // PashuGPT data - include ALL fields from the response
         pashuGPTData: pashuFarmer,
-        // Amul farmer data (matched by farmerCode) - include ALL fields from the response
-        amulData: amulFarmer || null,
+        // Amul farmer data (matched by farmerCode) - sensitive financial fields are masked
+        amulData: maskedAmulFarmer,
         // Society data (shared, but included per farmer for convenience) - include ALL fields
         society: societyData || null,
         // Animal details (single animal by tag - included in all farmers since it's tag-based query) - include ALL fields
