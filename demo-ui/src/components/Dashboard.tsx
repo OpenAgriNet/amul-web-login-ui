@@ -5,7 +5,6 @@ import {
   getPashuGPTFarmerByMobile,
   getPashuGPTAnimalByTag,
 } from '../api'
-import Documentation from './Documentation'
 
 interface Props {
   auth: AuthState
@@ -126,14 +125,6 @@ export default function Dashboard({ auth, onLogout }: Props) {
             </p>
           </div>
           <div className="flex gap-3">
-            {jwtToken && (
-              <button
-                onClick={handleOpenChat}
-                className="border border-white hover:bg-white hover:text-black px-4 py-2 rounded-lg transition-colors"
-              >
-                Open Chat with Farmer ID
-              </button>
-            )}
             <button
               onClick={onLogout}
               className="border border-white hover:bg-white hover:text-black px-4 py-2 rounded-lg transition-colors"
@@ -164,8 +155,17 @@ export default function Dashboard({ auth, onLogout }: Props) {
       </div>
       )}
 
-      {/* Documentation Page */}
-      {!loading && !error && <Documentation />}
+      {/* Chat Button - Centered */}
+      {!loading && !error && jwtToken && (
+        <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
+          <button
+            onClick={handleOpenChat}
+            className="bg-black text-white hover:bg-neutral-800 px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
+          >
+            Chat with Vistaar
+          </button>
+        </div>
+      )}
     </div>
   )
 }
