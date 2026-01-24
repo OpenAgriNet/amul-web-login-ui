@@ -1,74 +1,41 @@
 import { useState, useEffect } from 'react'
 import type { AuthState } from '../types'
-import {
-  authenticatedRequest,
-  getPashuGPTFarmerByMobile,
-  getPashuGPTAnimalByTag,
-} from '../api'
 
 interface Props {
   auth: AuthState
   onLogout: () => void
 }
 
-const HARDCODED_TAG_NUMBER = '106290093933'
-
 export default function Dashboard({ auth, onLogout }: Props) {
   const [loading, setLoading] = useState(true)
   const [jwtToken, setJwtToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [_combinedData, setCombinedData] = useState<any>(null)
 
-  // API Response Data
-  const [_farmerByMobile, setFarmerByMobile] = useState<any>(null)
-  const [_animalByTag, setAnimalByTag] = useState<any>(null)
-  const [amulFarmerDetail, setAmulFarmerDetail] = useState<any>(null)
-  const [amulSocietyData, setAmulSocietyData] = useState<any>(null)
-
-  // Fetch all APIs and generate JWT token
+  // Fetch combined PashuGPT data and generate JWT token
   useEffect(() => {
-    const fetchAllData = async () => {
-    setLoading(true)
+    const fetchDataAndGenerateToken = async () => {
+      setLoading(true)
       setError(null)
 
       try {
-        // 1. Fetch FarmerByMobile (PashuGPT)
-        const farmerData = await getPashuGPTFarmerByMobile(auth.mobileNumber)
-        setFarmerByMobile(farmerData)
+        // 1. Fetch combined PashuGPT data (farmer + animals + cvcc)
+        const combinedResponse = await fetch(`/api/pashugpt/combined?mobileNumber=${auth.mobileNumber}`)
 
-        // 2. Fetch AnimalByTag (PashuGPT) - hardcoded tag
-        const animalData = await getPashuGPTAnimalByTag(HARDCODED_TAG_NUMBER)
-        setAnimalByTag(animalData)
+        if (!combinedResponse.ok) {
+          throw new Error(`Failed to fetch data: ${combinedResponse.statusText}`)
+        }
 
-        // 3. Fetch GetFarmerDetail (Amul)
-        const farmerDetail = await authenticatedRequest(
-          auth.baseUrl,
-          'GetFarmerDetail',
-          auth.bearerToken,
-          auth.deviceId
-        )
-        setAmulFarmerDetail(farmerDetail)
+        const data = await combinedResponse.json()
+        setCombinedData(data)
 
-        // 4. Fetch GetSocietyData (Amul)
-        const societyData = await authenticatedRequest(
-          auth.baseUrl,
-          'GetSocietyData',
-          auth.bearerToken,
-          auth.deviceId
-        )
-        setAmulSocietyData(societyData)
-
-        // 5. Generate JWT token with all data (server-side)
+        // 2. Generate JWT token with combined data
         const tokenResponse = await fetch('/api/generate-token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            farmerData,
-            animalData,
-            amulFarmerDetail,
-            amulSocietyData,
-          }),
+          body: JSON.stringify(data),
         })
 
         if (!tokenResponse.ok) {
@@ -77,7 +44,6 @@ export default function Dashboard({ auth, onLogout }: Props) {
             const errorData = await tokenResponse.json()
             errorMessage = errorData.error || errorMessage
           } catch {
-            // If response is not JSON, use the status text
             const text = await tokenResponse.text()
             errorMessage = text || errorMessage
           }
@@ -98,7 +64,7 @@ export default function Dashboard({ auth, onLogout }: Props) {
     }
 
     if (auth.isAuthenticated) {
-      fetchAllData()
+      fetchDataAndGenerateToken()
     }
   }, [auth])
 
