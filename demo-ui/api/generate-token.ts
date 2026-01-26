@@ -1,5 +1,4 @@
 import * as jose from 'jose';
-import { maskSensitiveFinancialData } from './utils/mask-sensitive-data';
 
 // Type declaration for Edge Runtime environment
 declare const process: {
@@ -21,13 +20,13 @@ export default async function handler(request: Request) {
   }
 
   try {
-    const data = await request.json();
-    const { farmerData, animalData, amulFarmerDetail, amulSocietyData } = data;
+    // Combined API data structure: { farmer, animals, cvcc, errors? }
+    const combinedData = await request.json();
 
     // Get JWT private key from environment variable
     // @ts-ignore - process.env is available in Vercel Edge Runtime
     const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY;
-    
+
     if (!JWT_PRIVATE_KEY) {
       return new Response(JSON.stringify({ error: 'Server configuration error: JWT_PRIVATE_KEY not set' }), {
         status: 500,
@@ -35,51 +34,32 @@ export default async function handler(request: Request) {
       });
     }
 
-    // Compile all farmer and animal information into JWT payload
-    // All data goes into a "data" field so backend can easily filter out standard JWT claims (iss, exp, iat, etc.)
-    // Note: farmerData is an array - one mobile number can have multiple farmer registrations
-    // We collate all data (PashuGPT, Amul, Society, Animal) per farmer by matching farmerCode
-    // IMPORTANT: We include ALL fields from API responses to avoid data loss
-    const farmers = Array.isArray(farmerData) ? farmerData : (farmerData ? [farmerData] : []);
-    const amulFarmers = Array.isArray(amulFarmerDetail?.Data) ? amulFarmerDetail.Data : (amulFarmerDetail?.Data ? [amulFarmerDetail.Data] : []);
-    const societyData = amulSocietyData?.Data || null;
-    
-    // Collate all data per farmer by matching farmerCode
-    const collatedFarmers = farmers.map((pashuFarmer: any) => {
-      // Find matching Amul farmer data by farmerCode
-      const amulFarmer = amulFarmers.find((af: any) => af.FarmerCode === pashuFarmer.farmerCode);
-      
-      // Mask sensitive financial information before including in JWT
-      // Based on OpenAPI spec: BankAccountNo, IFSCCode, BankBranchCode are sensitive
-      // BankName is kept unmasked as it's not sensitive
-      const maskedAmulFarmer = amulFarmer ? maskSensitiveFinancialData(amulFarmer) : null;
-      
-      return {
-        // PashuGPT data - include ALL fields from the response
-        pashuGPTData: pashuFarmer,
-        // Amul farmer data (matched by farmerCode) - sensitive financial fields are masked
-        amulData: maskedAmulFarmer,
-        // Society data (shared, but included per farmer for convenience) - include ALL fields
-        society: societyData || null,
-        // Animal details (single animal by tag - included in all farmers since it's tag-based query) - include ALL fields
-        animalDetails: animalData || null,
-      };
-    });
-    
+    // Extract data from combined API response
+    const { farmer, animals, cvcc } = combinedData;
+
+    // Get primary farmer code for sub claim
+    const primaryFarmerCode = Array.isArray(farmer) && farmer.length > 0
+      ? farmer[0].farmerCode
+      : 'unknown';
+
+    // Build JWT payload with all PashuGPT data
+    // The "data" field contains all farmer context for the LLM
     const payload = {
-      sub: collatedFarmers[0]?.pashuGPTData?.farmerCode || 'unknown',
+      sub: primaryFarmerCode,
       data: {
-        farmers: collatedFarmers,
+        // Farmer records from PashuGPT
+        farmers: farmer || [],
+        // Animal details for all tags associated with the farmer
+        animals: animals || [],
+        // CVCC data (if available)
+        cvcc: cvcc || [],
       },
     };
 
     // Generate JWT token using jose library (Edge Runtime compatible)
-    // Parse the private key (should be in PEM format with proper newlines)
-    // Note: JWT_PRIVATE_KEY should be in PKCS#8 format (starts with -----BEGIN PRIVATE KEY-----)
-    // If stored as env var, ensure newlines are preserved (use \n or actual newlines)
     const privateKey = await jose.importPKCS8(JWT_PRIVATE_KEY.replace(/\\n/g, '\n'), 'RS256');
-    
-    // Sign the JWT
+
+    // Sign the JWT with 24h expiration
     const token = await new jose.SignJWT(payload)
       .setProtectedHeader({ alg: 'RS256' })
       .setIssuedAt()
