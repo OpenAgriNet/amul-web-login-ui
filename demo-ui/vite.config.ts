@@ -1,49 +1,26 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { generateTokenPlugin } from './vite-plugin-generate-token'
-
-// PashuGPT token for local dev only - in production this is in env vars
-const PASHUGPT_TOKEN = 'REDACTED_PASHUGPT_TOKEN'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), generateTokenPlugin()],
+  plugins: [react()],
   server: {
     proxy: {
-      '/api/amul': {
-        target: 'https://farmer.amulamcs.com',
+      // Proxy all API requests to the backend server (runs on port 3001)
+      // This keeps secrets server-side, similar to Vercel serverless functions
+      '/api': {
+        target: process.env.VITE_API_SERVER || 'http://localhost:3001',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/amul/, ''),
         secure: false,
       },
-      '/api/pashugpt/farmer': {
-        target: 'https://api.amulpashudhan.com',
-        changeOrigin: true,
-        rewrite: (path) => {
-          const url = new URL(path, 'http://localhost')
-          return `/configman/v1/PashuGPT/GetFarmerDetailsByMobile${url.search}`
-        },
-        secure: false,
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Authorization', `Bearer ${PASHUGPT_TOKEN}`)
-          })
-        },
-      },
-      '/api/pashugpt/animal': {
-        target: 'https://api.amulpashudhan.com',
-        changeOrigin: true,
-        rewrite: (path) => {
-          const url = new URL(path, 'http://localhost')
-          return `/configman/v1/PashuGPT/GetAnimalDetailsByTagNo${url.search}`
-        },
-        secure: false,
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Authorization', `Bearer ${PASHUGPT_TOKEN}`)
-          })
-        },
-      },
+      // Alternative: Direct proxy to Amul APIs (if not using backend server)
+      // Uncomment if you want to bypass the backend for Amul APIs
+      // '/api/amul': {
+      //   target: 'https://farmer.amulamcs.com',
+      //   changeOrigin: true,
+      //   rewrite: (path) => path.replace(/^\/api\/amul/, ''),
+      //   secure: false,
+      // },
     },
   },
 })

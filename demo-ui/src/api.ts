@@ -1,3 +1,9 @@
+// Base URL for API - by default same-origin `/api`
+// In most deployments you will serve the frontend and backend on the same domain,
+// so this can stay empty and all requests go to relative `/api/...` paths.
+// If you ever host the API on a different origin, set VITE_API_BASE_URL accordingly.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+
 // Amul API Constants
 const APP_KEY = '20259FF4-9774-4E2D-9542-EAA16752C896'
 const APP_VERIFI_SECRET = 'Cdqaecg+MSQkpBAFDl5afOK740u1pL1xD+xrahJgQyKWU7tT0zKnmSrL7CVMDJMJWgS5JqIEgqFEKg0lXkYA03eC+4UO+amo17+93vtR+MarSgEzaEAoClSiNa5AduUWewN7Vv41688ZoeJmr9F3mvMsjJp7S8Z16DQhwz1sSHM004uq9N/iYQm1BsP22zONti/ciP9TuCzVMmjGuslOIPQEo9ubRrox2aDYkhlKjLsqNxC0CUEIpIDCvSkw7+qnTUy3prQ2ID21/W/+ohLuDJVXulRpcIzaqTEVcLsnMCY0vVfvzfqBGPw8lbYstAfcyHvPvaWx1BlTJo6GZAcdgQ=='
@@ -20,7 +26,7 @@ export function generateDeviceId(): string {
 // ============== Main Amul APIs (OTP Required) ==============
 
 export async function getApiUrl(mobileNo: string) {
-  const response = await fetch('/api/amul/farmer/GetAPIUrl', {
+  const response = await fetch(`${API_BASE}/api/amul/farmer/GetAPIUrl`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -38,7 +44,7 @@ export async function getApiUrl(mobileNo: string) {
 }
 
 export async function sendOtp(mobileNo: string, deviceId: string) {
-  const response = await fetch('/api/amul/ValidateMobileNo', {
+  const response = await fetch(`${API_BASE}/api/amul/ValidateMobileNo`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -65,7 +71,7 @@ export async function sendOtp(mobileNo: string, deviceId: string) {
 }
 
 export async function verifyOtp(mobileNo: string, otp: string, deviceId: string) {
-  const response = await fetch('/api/amul/RegisterMobileNo', {
+  const response = await fetch(`${API_BASE}/api/amul/RegisterMobileNo`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -109,7 +115,7 @@ export async function authenticatedRequest(
 ) {
   const encodedToken = btoa(`${bearerToken}:${deviceId}:${generateRequestId()}:${generateSignature()}`)
 
-  const response = await fetch(`/api/amul/${endpoint}`, {
+  const response = await fetch(`${API_BASE}/api/amul/${endpoint}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -124,11 +130,11 @@ export async function authenticatedRequest(
 // ============== PashuGPT APIs (via serverless functions - token protected) ==============
 
 export async function getPashuGPTFarmerByMobile(mobileNumber: string) {
-  const response = await fetch(`/api/pashugpt/farmer?mobileNumber=${mobileNumber}`)
+  const response = await fetch(`${API_BASE}/api/pashugpt/farmer?mobileNumber=${mobileNumber}`)
   return response.json()
 }
 
 export async function getPashuGPTAnimalByTag(tagNo: string) {
-  const response = await fetch(`/api/pashugpt/animal?tagNo=${tagNo}`)
+  const response = await fetch(`${API_BASE}/api/pashugpt/animal?tagNo=${tagNo}`)
   return response.json()
 }
