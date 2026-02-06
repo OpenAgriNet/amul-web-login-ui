@@ -128,7 +128,7 @@ export default function Dashboard({ auth, onLogout }: Props) {
             onClick={handleOpenChat}
             className="bg-black text-white hover:bg-neutral-800 px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
           >
-            Chat with Vistaar
+            Chat with Amul AI
           </button>
         </div>
       )}
