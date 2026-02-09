@@ -55,10 +55,14 @@ export default function Dashboard({ auth }: Props) {
           throw new Error('Token not received from server')
         }
         setJwtToken(result.token)
+        
+        // Redirect to chat URL with token
+        const baseUrl = import.meta.env.VITE_CHAT_BASE_URL || 'https://dev-amulmitra.amul.com'
+        const chatUrl = `${baseUrl}/?token=${result.token}`
+        window.location.href = chatUrl
       } catch (err) {
         setError((err as Error).message)
         console.error('Error fetching data:', err)
-      } finally {
         setLoading(false)
       }
     }
@@ -91,29 +95,6 @@ export default function Dashboard({ auth }: Props) {
         </div>
       )}
 
-      {/* Missing Token State */}
-      {!loading && !error && !jwtToken && (
-        <div className="p-6">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h3 className="font-semibold text-red-800 mb-2">Error</h3>
-            <p className="text-red-600">Token not available. Please wait for data to load.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Chat Content */}
-      {jwtToken && (
-        <div className="flex-1 flex flex-col">
-          <div className="w-full flex-1 overflow-hidden">
-            <iframe
-              src={`${import.meta.env.VITE_CHAT_BASE_URL}/?token=${jwtToken}`}
-              className="w-full h-full border-none"
-              title="Amul AI Chat"
-              allow="geolocation; microphone"
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
