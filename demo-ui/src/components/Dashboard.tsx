@@ -6,7 +6,7 @@ interface Props {
   onLogout: () => void
 }
 
-export default function Dashboard({ auth, onLogout }: Props) {
+export default function Dashboard({ auth }: Props) {
   const [loading, setLoading] = useState(true)
   const [jwtToken, setJwtToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -63,44 +63,14 @@ export default function Dashboard({ auth, onLogout }: Props) {
       }
     }
 
-    if (auth.isAuthenticated) {
+    if (auth.isAuthenticated && !jwtToken && !error) {
       fetchDataAndGenerateToken()
     }
   }, [auth])
 
-  const handleOpenChat = () => {
-    if (!jwtToken) {
-      alert('Token not available. Please wait for data to load.')
-      return
-    }
-
-    const baseUrl = import.meta.env.VITE_CHAT_BASE_URL || 'https://dev-amulmitra.amul.com'
-    const chatUrl = `${baseUrl}/?token=${jwtToken}`
-    window.open(chatUrl, '_blank')
-  }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-black text-white px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Amul API Dashboard</h1>
-            <p className="text-neutral-400 text-sm">
-              Logged in as: {auth.mobileNumber}
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={onLogout}
-              className="border border-white hover:bg-white hover:text-black px-4 py-2 rounded-lg transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
+    <div className="h-screen flex flex-col bg-gray-100">
       {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
@@ -108,8 +78,8 @@ export default function Dashboard({ auth, onLogout }: Props) {
             <div className="text-xl font-semibold mb-2">Loading farmer data...</div>
             <div className="text-neutral-500">Fetching APIs and generating token...</div>
           </div>
-                </div>
-              )}
+        </div>
+      )}
 
       {/* Error State */}
       {error && !loading && (
@@ -117,22 +87,33 @@ export default function Dashboard({ auth, onLogout }: Props) {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <h3 className="font-semibold text-red-800 mb-2">Error</h3>
             <p className="text-red-600">{error}</p>
+          </div>
         </div>
-      </div>
       )}
 
-      {/* Chat Button - Centered */}
-      {!loading && !error && jwtToken && (
-        <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
-          <button
-            onClick={handleOpenChat}
-            className="bg-black text-white hover:bg-neutral-800 px-8 py-4 rounded-lg text-lg font-semibold transition-colors"
-          >
-            Chat with Amul AI
-          </button>
+      {/* Missing Token State */}
+      {!loading && !error && !jwtToken && (
+        <div className="p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 className="font-semibold text-red-800 mb-2">Error</h3>
+            <p className="text-red-600">Token not available. Please wait for data to load.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Content */}
+      {jwtToken && (
+        <div className="flex-1 flex flex-col">
+          <div className="w-full flex-1 overflow-hidden">
+            <iframe
+              src={`${import.meta.env.VITE_CHAT_BASE_URL || 'https://dev-amulmitra.amul.com'}/?token=${jwtToken}`}
+              className="w-full h-full border-none"
+              title="Amul AI Chat"
+              allow="geolocation; microphone"
+            />
+          </div>
         </div>
       )}
     </div>
   )
 }
-

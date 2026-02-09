@@ -2,10 +2,50 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/AmulLogo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Amul PashuGPT Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+      }
+      
+      @keyframes smart-pulsate {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 0.6;
+        }
+        50% {
+          transform: scale(1.15);
+          opacity: 0.8;
+        }
+      }
+      
+      .animate-smart-pulsate {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        isolation: isolate;
+      }
+      
+      .animate-smart-pulsate::before {
+        content: '';
+        position: absolute;
+        width: 90%;
+        height: 90%;
+        border-radius: 50%;
+        background: linear-gradient(90deg, #FF1150 0%, #218FFF 100%);
+        filter: blur(5px);
+        z-index: -1;
+        animation: smart-pulsate 1.5s ease-in-out infinite;
+        animation-delay: 120ms;
+      }
+    </style>
   </head>
   <body class="bg-gray-100">
     <div id="root"></div>

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { AuthState } from '../types'
+const AmulLogo = '/AmulLogo.svg';
+const AmulTextImg = '/amulTextImg.svg';
 
 interface Props {
   onLogin: (auth: AuthState) => void
@@ -30,10 +32,16 @@ export default function LoginForm({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div 
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: 'linear-gradient(180deg, #FFF2F2 0%, #FFFFFF 100%)' }}
+    >
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Amul AI</h1>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="w-24 h-24 mb-6 animate-smart-pulsate">
+            <img src={AmulLogo} alt="Amul Logo" className="w-full h-full object-contain p-2" />
+          </div>
+          <img src={AmulTextImg} alt="Amul AI" className="h-10 object-contain" />
           <p className="text-neutral-500 mt-2">Enter your mobile number to continue</p>
         </div>
 
@@ -53,7 +61,7 @@ export default function LoginForm({ onLogin }: Props) {
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value)}
               placeholder="Enter 10-digit mobile number"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none"
+              className="w-full px-4 py-3 border border-[#E2E2E2] rounded-lg focus:ring-1 focus:ring-[#FF4A4A] focus:border-[#FF4A4A] outline-none"
               maxLength={10}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && mobileNumber.length === 10) {
@@ -65,7 +73,8 @@ export default function LoginForm({ onLogin }: Props) {
           <button
             onClick={handleSubmit}
             disabled={loading || mobileNumber.length !== 10}
-            className="w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-neutral-800 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{ background: 'linear-gradient(90deg, #218FFF 0%, #FF1150 100%)' }}
           >
             {loading ? 'Loading...' : 'Continue'}
           </button>
