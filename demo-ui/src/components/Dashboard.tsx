@@ -106,7 +106,7 @@ export default function Dashboard({ auth }: Props) {
         <div className="flex-1 flex flex-col">
           <div className="w-full flex-1 overflow-hidden">
             <iframe
-              src={`${import.meta.env.VITE_CHAT_BASE_URL || 'https://dev-amulmitra.amul.com'}/?token=${jwtToken}`}
+              src={`${import.meta.env.VITE_CHAT_BASE_URL}/?token=${jwtToken}`}
               className="w-full h-full border-none"
               title="Amul AI Chat"
               allow="geolocation; microphone"
