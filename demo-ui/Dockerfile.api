@@ -1,0 +1,32 @@
+# Production build for login-demo API server (Express + TypeScript)
+# Builds server code with esbuild, runs with Node.js on port 3001.
+# Env vars (from K8s secret): JWT_PRIVATE_KEY, PASHUGPT_TOKEN, PASHUGPT_TOKEN_2
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+# Bundle server TypeScript into a single ESM file.
+# esbuild resolves cross-directory imports (server/ -> api/) at compile time.
+# --packages=external keeps npm deps (express, cors, jose) as runtime imports.
+RUN npx esbuild server/index.ts --bundle --platform=node --target=node20 \
+    --outfile=dist/server.mjs --format=esm --packages=external
+
+# --- Production stage: only runtime deps ---
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist/server.mjs ./dist/server.mjs
+
+EXPOSE 3001
+ENV PORT=3001
+
+CMD ["node", "dist/server.mjs"]

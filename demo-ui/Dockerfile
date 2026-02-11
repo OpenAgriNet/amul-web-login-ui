@@ -1,5 +1,9 @@
-# Multi-stage build for demo-ui
+# Multi-stage build for demo-ui frontend (React + Vite -> nginx)
 FROM node:20-alpine AS builder
+
+# VITE_CHAT_BASE_URL is baked into the JS bundle at build time
+ARG VITE_CHAT_BASE_URL=https://dev-amulmitra.amul.com
+ENV VITE_CHAT_BASE_URL=$VITE_CHAT_BASE_URL
 
 WORKDIR /app
 
@@ -12,7 +16,7 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application (Vite reads VITE_* env vars)
 RUN npm run build
 
 # Production stage
