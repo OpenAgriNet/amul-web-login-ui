@@ -8,19 +8,29 @@ export async function generateTokenHandler(req: Request, res: Response) {
   }
 
   try {
-    // Combined API data structure: { farmerData, animalData, amulFarmerDetail, amulSocietyData }
-    // This matches the structure from the frontend combined API call
+    // Accept both legacy shape (farmerData/animalData) and combined shape (farmer/animals/cvcc)
     const data = req.body;
-    const { farmerData, animalData, amulFarmerDetail, amulSocietyData } = data;
+    const {
+      farmerData,
+      animalData,
+      amulFarmerDetail,
+      amulSocietyData,
+      farmer,
+      animals,
+      cvcc,
+    } = data;
+    const normalizedFarmerData = farmerData ?? farmer;
+    const normalizedAnimalData = animalData ?? animals;
     console.log('[generate-token] incoming request', {
       contentType: req.headers['content-type'],
       bodyType: Array.isArray(data) ? 'array' : typeof data,
       keys: data && typeof data === 'object' ? Object.keys(data) : [],
-      farmerDataIsArray: Array.isArray(farmerData),
-      farmerDataLength: Array.isArray(farmerData) ? farmerData.length : 0,
-      hasAnimalData: Boolean(animalData),
+      farmerDataIsArray: Array.isArray(normalizedFarmerData),
+      farmerDataLength: Array.isArray(normalizedFarmerData) ? normalizedFarmerData.length : 0,
+      hasAnimalData: Boolean(normalizedAnimalData),
       hasAmulFarmerDetail: Boolean(amulFarmerDetail),
       hasAmulSocietyData: Boolean(amulSocietyData),
+      hasCvcc: Boolean(cvcc),
     });
 
     // Get JWT private key from environment variable
@@ -34,7 +44,9 @@ export async function generateTokenHandler(req: Request, res: Response) {
     // All data goes into a "data" field so backend can easily filter out standard JWT claims
     // Note: farmerData is an array - one mobile number can have multiple farmer registrations
     // We collate all data (PashuGPT, Amul, Society, Animal) per farmer by matching farmerCode
-    const farmers = Array.isArray(farmerData) ? farmerData : (farmerData ? [farmerData] : []);
+    const farmers = Array.isArray(normalizedFarmerData)
+      ? normalizedFarmerData
+      : (normalizedFarmerData ? [normalizedFarmerData] : []);
     const amulFarmers = Array.isArray(amulFarmerDetail?.Data) ? amulFarmerDetail.Data : (amulFarmerDetail?.Data ? [amulFarmerDetail.Data] : []);
     const societyData = amulSocietyData?.Data || null;
     
@@ -54,7 +66,9 @@ export async function generateTokenHandler(req: Request, res: Response) {
         // Society data (shared, but included per farmer for convenience)
         society: societyData || null,
         // Animal details (single animal by tag - included in all farmers since it's tag-based query)
-        animalDetails: animalData || null,
+        animalDetails: normalizedAnimalData || null,
+        // Optional CVCC details when combined endpoint provided it
+        cvccDetails: cvcc || null,
       };
     });
     

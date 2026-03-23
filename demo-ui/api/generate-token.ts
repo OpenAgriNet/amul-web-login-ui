@@ -20,7 +20,7 @@ export default async function handler(request: Request) {
   }
 
   try {
-    // Combined API data structure: { farmer, animals, cvcc, errors? }
+    // Accept both legacy shape (farmerData/animalData) and combined shape (farmer/animals/cvcc)
     const combinedData = await request.json();
 
     // Get JWT private key from environment variable
@@ -34,12 +34,19 @@ export default async function handler(request: Request) {
       });
     }
 
-    // Extract data from combined API response
-    const { farmer, animals, cvcc } = combinedData;
+    const {
+      farmerData,
+      animalData,
+      farmer,
+      animals,
+      cvcc,
+    } = combinedData;
+    const normalizedFarmer = farmerData ?? farmer;
+    const normalizedAnimals = animalData ?? animals;
 
     // Get primary farmer code for sub claim
-    const primaryFarmerCode = Array.isArray(farmer) && farmer.length > 0
-      ? farmer[0].farmerCode
+    const primaryFarmerCode = Array.isArray(normalizedFarmer) && normalizedFarmer.length > 0
+      ? normalizedFarmer[0].farmerCode
       : 'unknown';
 
     // Build JWT payload with all PashuGPT data
@@ -48,9 +55,9 @@ export default async function handler(request: Request) {
       sub: primaryFarmerCode,
       data: {
         // Farmer records from PashuGPT
-        farmers: farmer || [],
+        farmers: normalizedFarmer || [],
         // Animal details for all tags associated with the farmer
-        animals: animals || [],
+        animals: normalizedAnimals || [],
         // CVCC data (if available)
         cvcc: cvcc || [],
       },
