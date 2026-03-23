@@ -12,6 +12,16 @@ export async function generateTokenHandler(req: Request, res: Response) {
     // This matches the structure from the frontend combined API call
     const data = req.body;
     const { farmerData, animalData, amulFarmerDetail, amulSocietyData } = data;
+    console.log('[generate-token] incoming request', {
+      contentType: req.headers['content-type'],
+      bodyType: Array.isArray(data) ? 'array' : typeof data,
+      keys: data && typeof data === 'object' ? Object.keys(data) : [],
+      farmerDataIsArray: Array.isArray(farmerData),
+      farmerDataLength: Array.isArray(farmerData) ? farmerData.length : 0,
+      hasAnimalData: Boolean(animalData),
+      hasAmulFarmerDetail: Boolean(amulFarmerDetail),
+      hasAmulSocietyData: Boolean(amulSocietyData),
+    });
 
     // Get JWT private key from environment variable
     const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY;
@@ -54,6 +64,10 @@ export async function generateTokenHandler(req: Request, res: Response) {
         farmers: collatedFarmers,
       },
     };
+    console.log('[generate-token] payload summary', {
+      sub: payload.sub,
+      farmersLength: payload.data.farmers.length,
+    });
 
     // Generate JWT token using jose library
     const privateKey = await jose.importPKCS8(JWT_PRIVATE_KEY.replace(/\\n/g, '\n'), 'RS256');
@@ -65,8 +79,13 @@ export async function generateTokenHandler(req: Request, res: Response) {
       .setExpirationTime('24h')
       .sign(privateKey);
 
+    console.log('[generate-token] token issued', {
+      sub: payload.sub,
+      farmersLength: payload.data.farmers.length,
+    });
     return res.status(200).json({ token });
   } catch (error) {
+    console.error('[generate-token] failed', error);
     return res.status(500).json({ error: (error as Error).message });
   }
 }

@@ -51,6 +51,12 @@ export async function pashugptCombinedHandler(req: Request, res: Response) {
   const tagNo = req.query.tagNo as string;
   const tokenNo = req.query.tokenNo as string || process.env.PASHUGPT_TOKEN_2 || '';
   const vendorNo = req.query.vendorNo as string || '9999999';
+  console.log('[combined] request received', {
+    mobileNumber,
+    tagNo,
+    tokenNoProvided: Boolean(req.query.tokenNo),
+    vendorNo,
+  });
 
   if (!mobileNumber && !tagNo) {
     return res.status(400).json({ error: 'At least mobileNumber or tagNo is required' });
@@ -84,6 +90,10 @@ export async function pashugptCombinedHandler(req: Request, res: Response) {
         }
       );
       results.farmer = await response.json();
+      console.log('[combined] farmer fetch summary', {
+        farmerType: Array.isArray(results.farmer) ? 'array' : typeof results.farmer,
+        farmerLength: Array.isArray(results.farmer) ? results.farmer.length : 0,
+      });
     } catch (err) {
       errors.push(`Farmer API: ${String(err)}`);
     }
@@ -129,6 +139,12 @@ export async function pashugptCombinedHandler(req: Request, res: Response) {
   if (errors.length > 0) {
     results.errors = errors;
   }
+  console.log('[combined] response summary', {
+    farmerLength: Array.isArray(results.farmer) ? results.farmer.length : 0,
+    animalsLength: Array.isArray(results.animals) ? results.animals.length : 0,
+    cvccLength: Array.isArray(results.cvcc) ? results.cvcc.length : 0,
+    errorsLength: errors.length,
+  });
 
   return res.status(200).json(results);
 }
