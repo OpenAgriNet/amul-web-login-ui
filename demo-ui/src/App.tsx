@@ -7,29 +7,18 @@ function App() {
   const [auth, setAuth] = useState<AuthState>({
     isAuthenticated: false,
     mobileNumber: '',
-    bearerToken: '',
-    baseUrl: 'https://farmer.amulamcs.com/',
-    deviceId: '',
   })
 
-  const handleLogin = (newAuth: AuthState) => {
-    setAuth(newAuth)
-  }
-
   if (!auth.isAuthenticated) {
-    return <LoginForm onLogin={handleLogin} />
+    return <LoginForm onLogin={setAuth} />
   }
 
-  return <Dashboard
-    auth={auth}
-    onLogout={() => setAuth({
-      isAuthenticated: false,
-      mobileNumber: '',
-      bearerToken: '',
-      baseUrl: 'https://farmer.amulamcs.com/',
-      deviceId: '',
-    })}
-  />
+  return (
+    <Dashboard
+      auth={auth}
+      onLogout={() => setAuth({ isAuthenticated: false, mobileNumber: '' })}
+    />
+  )
 }
 
 export default App

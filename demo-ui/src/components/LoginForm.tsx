@@ -17,13 +17,9 @@ export default function LoginForm({ onLogin }: Props) {
     setError('')
 
     try {
-      // Simply proceed with the mobile number - no OTP verification
       onLogin({
         isAuthenticated: true,
         mobileNumber,
-        bearerToken: '', // Not needed for PashuGPT-only flow
-        baseUrl: '',
-        deviceId: '',
       })
     } catch (err) {
       setError('Error: ' + (err as Error).message)
@@ -32,7 +28,7 @@ export default function LoginForm({ onLogin }: Props) {
   }
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center"
       style={{ background: 'linear-gradient(180deg, #FFF2F2 0%, #FFFFFF 100%)' }}
     >
