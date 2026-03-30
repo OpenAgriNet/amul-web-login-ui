@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { AuthState } from '../types'
+import { getTokenForPhone } from '../api'
 
 interface Props {
   auth: AuthState
@@ -8,84 +9,54 @@ interface Props {
 
 export default function Dashboard({ auth }: Props) {
   const [loading, setLoading] = useState(true)
-  const [jwtToken, setJwtToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [_combinedData, setCombinedData] = useState<any>(null)
 
-  // Fetch combined PashuGPT data and generate JWT token
   useEffect(() => {
-    const fetchDataAndGenerateToken = async () => {
+    let cancelled = false
+
+    const fetchTokenAndRedirect = async () => {
       setLoading(true)
       setError(null)
 
       try {
-        // 1. Fetch combined PashuGPT data (farmer + animals + cvcc)
-        const combinedResponse = await fetch(`/api/pashugpt/combined?mobileNumber=${auth.mobileNumber}`)
+        const result = await getTokenForPhone(auth.mobileNumber)
 
-        if (!combinedResponse.ok) {
-          throw new Error(`Failed to fetch data: ${combinedResponse.statusText}`)
+        if (cancelled) return
+
+        // Redirect to chat URL
+        if (result.url) {
+          window.location.href = result.url
+        } else {
+          // Fallback: build URL manually
+          const baseUrl = import.meta.env.VITE_CHAT_BASE_URL || 'https://dev-amulmitra.amul.com'
+          window.location.href = `${baseUrl}/?token=${result.access_token}`
         }
-
-        const data = await combinedResponse.json()
-        setCombinedData(data)
-
-        // 2. Generate JWT token with combined data
-        const tokenResponse = await fetch('/api/generate-token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        })
-
-        if (!tokenResponse.ok) {
-          let errorMessage = `HTTP ${tokenResponse.status}: ${tokenResponse.statusText}`
-          try {
-            const errorData = await tokenResponse.json()
-            errorMessage = errorData.error || errorMessage
-          } catch {
-            const text = await tokenResponse.text()
-            errorMessage = text || errorMessage
-          }
-          throw new Error(errorMessage)
-        }
-
-        const result = await tokenResponse.json()
-        if (!result.token) {
-          throw new Error('Token not received from server')
-        }
-        setJwtToken(result.token)
-        
-        // Redirect to chat URL with token
-        const baseUrl = import.meta.env.VITE_CHAT_BASE_URL || 'https://dev-amulmitra.amul.com'
-        const chatUrl = `${baseUrl}/?token=${result.token}`
-        window.location.href = chatUrl
       } catch (err) {
-        setError((err as Error).message)
-        console.error('Error fetching data:', err)
-        setLoading(false)
+        if (!cancelled) {
+          setError((err as Error).message)
+          setLoading(false)
+        }
       }
     }
 
-    if (auth.isAuthenticated && !jwtToken && !error) {
-      fetchDataAndGenerateToken()
+    if (auth.isAuthenticated) {
+      fetchTokenAndRedirect()
     }
-  }, [auth])
 
+    return () => { cancelled = true }
+  }, [auth.isAuthenticated, auth.mobileNumber])
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
           <div className="text-center">
             <div className="text-xl font-semibold mb-2">Loading farmer data...</div>
-            <div className="text-neutral-500">Fetching APIs and generating token...</div>
+            <div className="text-neutral-500">Fetching profile and generating token...</div>
           </div>
         </div>
       )}
 
-      {/* Error State */}
       {error && !loading && (
         <div className="p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -94,7 +65,6 @@ export default function Dashboard({ auth }: Props) {
           </div>
         </div>
       )}
-
     </div>
   )
 }

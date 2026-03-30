@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Backend API Server - Handles all API endpoints server-side (protects secrets)
+  # Backend API Server - Proxies token requests to OAN backend
   api-server:
     build:
       context: .
@@ -10,25 +10,13 @@ services:
     ports:
       - "3001:3001"
     environment:
-      # JWT Configuration
-      # Private key for signing JWT tokens (RS256 algorithm)
-      # Required for: JWT token generation in /api/generate-token
-      # Format: PKCS#8 (starts with -----BEGIN PRIVATE KEY-----)
-      # Note: Use \n for newlines in the key when setting as env var
-      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:-}
-      
-      # PashuGPT API Configuration
-      # Bearer token for PashuGPT API authentication
-      # Required for: /api/pashugpt/farmer and /api/pashugpt/animal endpoints
-      # This token is used to authenticate requests to:
-      # - https://api.amulpashudhan.com/configman/v1/PashuGPT/GetFarmerDetailsByMobile
-      # - https://api.amulpashudhan.com/configman/v1/PashuGPT/GetAnimalDetailsByTagNo
-      - PASHUGPT_TOKEN=${PASHUGPT_TOKEN:-}
-      - PASHUGPT_TOKEN_2=${PASHUGPT_TOKEN_2:-}
+      # OAN backend URL for token-for-phone endpoint
+      - OAN_API_URL=${OAN_API_URL:-http://host.docker.internal:8000}
+      # API key matching DEMO_UI_API_KEY on the OAN backend
+      - DEMO_UI_API_KEY=${DEMO_UI_API_KEY:-}
       - PORT=3001
     command: npm run dev:server
     volumes:
-      # Mount source code for hot reload
       - .:/app
       - /app/node_modules
     networks:
@@ -50,17 +38,10 @@ services:
     ports:
       - "5173:5173"
     environment:
-      # Frontend Configuration (Vite)
-      # Base URL for the chat application
-      # Used when opening chat with JWT token: ${VITE_CHAT_BASE_URL}/?token=${jwtToken}
-      # Default: https://dev-amulmitra.amul.com
-      # Note: VITE_ prefix is required for Vite to expose this to the frontend
       - VITE_CHAT_BASE_URL=${VITE_CHAT_BASE_URL:-https://dev-amulmitra.amul.com}
-      # Backend API server URL (used by Vite proxy)
       - VITE_API_SERVER=http://api-server:3001
     command: npm run dev -- --host 0.0.0.0
     volumes:
-      # Mount source code for hot reload
       - .:/app
       - /app/node_modules
     networks:

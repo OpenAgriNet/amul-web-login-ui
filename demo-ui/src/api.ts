@@ -1,140 +1,41 @@
-// Base URL for API - by default same-origin `/api`
-// In most deployments you will serve the frontend and backend on the same domain,
-// so this can stay empty and all requests go to relative `/api/...` paths.
-// If you ever host the API on a different origin, set VITE_API_BASE_URL accordingly.
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+// OAN backend base URL — same-origin by default, override with VITE_OAN_API_BASE_URL
+const OAN_API_BASE = import.meta.env.VITE_OAN_API_BASE_URL ?? ''
 
-// Amul API Constants
-const APP_KEY = '20259FF4-9774-4E2D-9542-EAA16752C896'
-const APP_VERIFI_SECRET = 'Cdqaecg+MSQkpBAFDl5afOK740u1pL1xD+xrahJgQyKWU7tT0zKnmSrL7CVMDJMJWgS5JqIEgqFEKg0lXkYA03eC+4UO+amo17+93vtR+MarSgEzaEAoClSiNa5AduUWewN7Vv41688ZoeJmr9F3mvMsjJp7S8Z16DQhwz1sSHM004uq9N/iYQm1BsP22zONti/ciP9TuCzVMmjGuslOIPQEo9ubRrox2aDYkhlKjLsqNxC0CUEIpIDCvSkw7+qnTUy3prQ2ID21/W/+ohLuDJVXulRpcIzaqTEVcLsnMCY0vVfvzfqBGPw8lbYstAfcyHvPvaWx1BlTJo6GZAcdgQ=='
-const API_VERSION = '1.0.1'
-const APP_VERSION = '3.0.4'
-const APP_TYPE = '3'
-const APP_PLATFORM = '3'
+// Demo-UI API key for the token-for-phone endpoint
+const API_KEY = import.meta.env.VITE_DEMO_UI_API_KEY ?? ''
 
-// PashuGPT API - uses serverless functions to protect the token
-
-// Generate random device ID
-export function generateDeviceId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
+export interface TokenForPhoneResponse {
+  url: string | null
+  access_token: string
+  token_type: string
+  expires_in: number
+  farmer_records_count: number
 }
 
-// ============== Main Amul APIs (OTP Required) ==============
+/**
+ * Call the OAN backend to generate a JWT with farmer data for a phone number.
+ * The backend fetches PashuGPT data and embeds it in the token.
+ */
+export async function getTokenForPhone(phone: string): Promise<TokenForPhoneResponse> {
+  const response = await fetch(
+    `${OAN_API_BASE}/api/auth/token-for-phone?api_key=${encodeURIComponent(API_KEY)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone }),
+    }
+  )
 
-export async function getApiUrl(mobileNo: string) {
-  const response = await fetch(`${API_BASE}/api/amul/farmer/GetAPIUrl`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-apiversion': API_VERSION,
-    },
-    body: JSON.stringify({
-      MobileNo: mobileNo,
-      ApiVersion: API_VERSION,
-      AppType: APP_TYPE,
-      APPPlatForm: APP_PLATFORM,
-      AppVersion: APP_VERSION,
-    }),
-  })
-  return response.json()
-}
+  if (!response.ok) {
+    let message = `HTTP ${response.status}: ${response.statusText}`
+    try {
+      const data = await response.json()
+      message = data.detail || message
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(message)
+  }
 
-export async function sendOtp(mobileNo: string, deviceId: string) {
-  const response = await fetch(`${API_BASE}/api/amul/ValidateMobileNo`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-apiversion': API_VERSION,
-    },
-    body: JSON.stringify({
-      AppKey: APP_KEY,
-      APPVerificationSecret: APP_VERIFI_SECRET,
-      MobileNo: mobileNo,
-      DeviceId: deviceId,
-      CultureId: '1',
-      ApiVersion: API_VERSION,
-      AppType: APP_TYPE,
-      APPPlatForm: APP_PLATFORM,
-      AppVersion: APP_VERSION,
-      OSVersion: '10',
-      screenresolution: '1080 * 1920',
-      model: 'SDK-Client',
-      PushNotificationId: '',
-      SocietyId: 0,
-    }),
-  })
-  return response.json()
-}
-
-export async function verifyOtp(mobileNo: string, otp: string, deviceId: string) {
-  const response = await fetch(`${API_BASE}/api/amul/RegisterMobileNo`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-apiversion': API_VERSION,
-    },
-    body: JSON.stringify({
-      AppKey: APP_KEY,
-      APPVerificationSecret: APP_VERIFI_SECRET,
-      MobileNo: mobileNo,
-      DeviceId: deviceId,
-      ApiVersion: API_VERSION,
-      AppType: APP_TYPE,
-      CultureId: '1',
-      APPPlatForm: APP_PLATFORM,
-      AppVersion: APP_VERSION,
-      OTP: otp,
-    }),
-  })
-  return response.json()
-}
-
-// Authenticated requests helper
-function generateRequestId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
-
-function generateSignature(): string {
-  return btoa(Math.random().toString()).substring(0, 44) + '='
-}
-
-export async function authenticatedRequest(
-  _baseUrl: string,
-  endpoint: string,
-  bearerToken: string,
-  deviceId: string,
-  body: object = {}
-) {
-  const encodedToken = btoa(`${bearerToken}:${deviceId}:${generateRequestId()}:${generateSignature()}`)
-
-  const response = await fetch(`${API_BASE}/api/amul/${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'x-apiversion': API_VERSION,
-      'Authorization': `Bearer ${encodedToken}`,
-    },
-    body: JSON.stringify({ CultureId: '1', ...body }),
-  })
-  return response.json()
-}
-
-// ============== PashuGPT APIs (via serverless functions - token protected) ==============
-
-export async function getPashuGPTFarmerByMobile(mobileNumber: string) {
-  const response = await fetch(`${API_BASE}/api/pashugpt/farmer?mobileNumber=${mobileNumber}`)
-  return response.json()
-}
-
-export async function getPashuGPTAnimalByTag(tagNo: string) {
-  const response = await fetch(`${API_BASE}/api/pashugpt/animal?tagNo=${tagNo}`)
   return response.json()
 }
