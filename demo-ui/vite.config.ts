@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    allowedHosts: ['login.prod.amulai.in', 'login.amulai.in'],
     proxy: {
       // Proxy all API requests to the backend server (runs on port 3001)
       // This keeps secrets server-side, similar to Vercel serverless functions
